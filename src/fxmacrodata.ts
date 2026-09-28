@@ -47,16 +47,16 @@ export class FxMacroDataClient {
     query?: FxMacroDataQuery,
     init: RequestInit = {}
   ): Promise<T> {
+    // History endpoints return 20 rows by default; pass `limit` (max 100) and
+    // `offset` in `query` and follow `pagination.next_offset` for more.
     const url = new URL(`${this.baseUrl}/${path.replace(/^\/+/, '')}`);
     appendQuery(url, query);
-    if (this.apiKey && !url.searchParams.has('api_key')) {
-      url.searchParams.set('api_key', this.apiKey);
-    }
 
     const response = await this.fetchImpl(url, {
       ...init,
       headers: {
         accept: 'application/json',
+        ...(this.apiKey ? { 'x-api-key': this.apiKey } : {}),
         ...(init.headers || {})
       }
     });

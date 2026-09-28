@@ -9,23 +9,28 @@ function response(data: unknown): Response {
 }
 
 describe('FxMacroDataClient', () => {
-  it('adds API key as a query parameter', async () => {
+  it('sends the API key as a header and passes paging parameters through', async () => {
     const urls: string[] = [];
+    const headers: Record<string, string>[] = [];
     const client = new FxMacroDataClient({
       apiKey: 'test-key',
       baseUrl: 'https://example.test/api/v1',
-      fetchImpl: async input => {
+      fetchImpl: async (input, init) => {
         urls.push(String(input));
+        headers.push(init?.headers as Record<string, string>);
         return response({ ok: true });
       }
     });
 
-    await client.forex('eur', 'usd', { start_date: '2026-07-01' });
+    await client.forex('eur', 'usd', { start_date: '2026-07-01', limit: 100, offset: 100 });
 
     const url = new URL(urls[0]);
     expect(url.pathname).toBe('/api/v1/forex/eur/usd');
     expect(url.searchParams.get('start_date')).toBe('2026-07-01');
-    expect(url.searchParams.get('api_key')).toBe('test-key');
+    expect(url.searchParams.get('limit')).toBe('100');
+    expect(url.searchParams.get('offset')).toBe('100');
+    expect(url.searchParams.has('api_key')).toBe(false);
+    expect(headers[0]['x-api-key']).toBe('test-key');
   });
 
   it('covers the macro, FX, calendar, COT, commodity, and curve endpoints', async () => {
