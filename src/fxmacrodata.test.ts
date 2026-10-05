@@ -33,6 +33,23 @@ describe('FxMacroDataClient', () => {
     expect(headers[0]['x-api-key']).toBe('test-key');
   });
 
+  it('does not follow redirects that could forward the API key', async () => {
+    const inits: (RequestInit | undefined)[] = [];
+    const client = new FxMacroDataClient({
+      apiKey: 'test-key',
+      baseUrl: 'https://example.test/v1',
+      fetchImpl: async (_input, init) => {
+        inits.push(init);
+        return response({ ok: true });
+      }
+    });
+
+    await client.calendar('usd');
+    await client.graphql({ query: '{ ping }' });
+
+    expect(inits.map(init => init?.redirect)).toEqual(['error', 'error']);
+  });
+
   it('covers the macro, FX, calendar, COT, commodity, and curve endpoints', async () => {
     const paths: string[] = [];
     const client = new FxMacroDataClient({

@@ -54,6 +54,8 @@ export class FxMacroDataClient {
 
     const response = await this.fetchImpl(url, {
       ...init,
+      // Never follow redirects, so the API key is not forwarded to another origin.
+      redirect: 'error',
       headers: {
         accept: 'application/json',
         ...(this.apiKey ? { 'x-api-key': this.apiKey } : {}),
